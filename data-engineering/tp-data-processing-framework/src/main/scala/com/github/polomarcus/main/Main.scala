@@ -25,10 +25,12 @@ object Main {
     val newsDatasets: Dataset[News] = NewsService.read(pathToJsonData)
 
     // print the dataset schema - tips : https://spark.apache.org/docs/latest/sql-getting-started.html#untyped-dataset-operations-aka-dataframe-operations
-    //@TODO newsDatasets.???
+    //@TODO 
+    newsDataframe.printSchema()
 
     // Show the first 10 elements - tips : https://spark.apache.org/docs/latest/sql-getting-started.html#creating-dataframes
-    //@TODO newsDatasets.???
+    //@TODO 
+    newsDataframe.show(10)
 
     // Enrich the dataset by apply the ClimateService.isClimateRelated function to the title and the description of a news
     // a assign this value to the "containsWordGlobalWarming" attribute
@@ -43,18 +45,29 @@ object Main {
 
     // Show how many news we have talking about climate change compare to others news (not related climate)
     // Tips: use a groupBy
-
+    val climateVsNonClimateCount = enrichedDataset.groupBy("containsWordGlobalWarming").count()
+    climateVsNonClimateCount.show()
 
     // Use SQL to query a "news" table - look at : https://spark.apache.org/docs/latest/sql-getting-started.html#running-sql-queries-programmatically
+    enrichedDataset.createOrReplaceTempView("news")
 
 
     // Use strongly typed dataset to be sure to not introduce a typo to your SQL Query
     // Tips : https://stackoverflow.com/a/46514327/3535853
+    val climateNewsCount = spark.sql("SELECT COUNT(*) FROM news WHERE containsWordGlobalWarming = true").collect()(0)(0)
+    val nonClimateNewsCount = spark.sql("SELECT COUNT(*) FROM news WHERE containsWordGlobalWarming = false").collect()(0)(0)
+    println(s"Climate-related news count: $climateNewsCount")
+    println(s"Non-climate-related news count: $nonClimateNewsCount")
 
 
     // Save it as a columnar format with Parquet with a partition by date and media
     // Learn about Parquet : https://spark.apache.org/docs/3.2.1/sql-data-sources-parquet.html
     // Learn about partition : https://spark.apache.org/docs/3.2.1/sql-data-sources-load-save-functions.html#bucketing-sorting-and-partitioning
+    enrichedDataset
+      .write
+      .partitionBy("date", "media")
+      .parquet("output_path")
+
 
     logger.info("Stopping the app")
     System.exit(0)

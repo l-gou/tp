@@ -22,5 +22,6 @@ object ClimateService {
       pattern.findFirstIn(description.toLowerCase).isDefined || pattern2
         .findFirstIn(description.toLowerCase)
         .isDefined
-    }
+  }
+
 }

@@ -22,27 +22,27 @@ object NewsService {
    * @param newsDataset
    * @return
    */
-  def enrichNewsWithClimateMetadata(newsDataset: Dataset[News]) : Dataset[News] = {
-    newsDataset.map { news =>
-      val enrichedNews = News(
-        news.title,
-        news.description,
-        news.date,
-        news.order,
-        news.presenter,
-        news.authors,
-        news.editor,
-        news.editorDeputy,
-        news.url,
-        news.urlTvNews,
-        news.containsWordGlobalWarming, // @TODO: we need to apply a function here from ClimateService
-        news.media
-      )
-
-      enrichedNews
-    }
+def enrichNewsWithClimateMetadata(newsDataset: Dataset[News]): Dataset[News] = {
+  newsDataset.map { news =>
+    val climateRelated = ClimateService.isClimateRelated(news.title)|| ClimateService.isClimateRelated(news.description)
+    val enrichedNews = News(
+      news.title,
+      news.description,
+      news.date,
+      news.order,
+      news.presenter,
+      news.authors,
+      news.editor,
+      news.editorDeputy,
+      news.url,
+      news.urlTvNews,
+      climateRelated, 
+      news.media
+    )
+    enrichedNews
   }
-
+}
+  
   /**
    * Only keep news about climate
    *
@@ -51,11 +51,10 @@ object NewsService {
    * @param newsDataset
    * @return newsDataset but with containsWordGlobalWarming to true
    */
-  def filterNews(newsDataset: Dataset[News]) : Dataset[News] = {
-    newsDataset.filter { news =>
-      ??? //@TODO complete here
-    }
+  def filterNews(newsDataset: Dataset[News]): Dataset[News] = {
+    newsDataset.filter(_.containsWordGlobalWarming) 
   }
+  
 
   /**
    * detect if a sentence is climate related by looking for these words in sentence :
@@ -65,8 +64,11 @@ object NewsService {
    * @param description "my awesome sentence contains a key word like climate change"
    * @return Boolean True
    */
-  def getNumberOfNews(dataset: Dataset[News]): Long = {
+  //def getNumberOfNews(dataset: Dataset[News]): Long = {
     //@TODO look a the Spark API to know how to count
-    return 1 // code here
+  //  return 1 // code here
+  def getNumberOfNews(dataset: Dataset[News]): Long = {
+    dataset.count() // Returns the count of rows in the dataset
   }
+  
 }
