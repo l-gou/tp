@@ -13,8 +13,9 @@ object Main {
 
     val co2Records = ClimateService.getCO2RawDataFromHawaii()
     val parsedCo2Records = ClimateService.parseRawData(co2Records)
-    ClimateService.showCO2Data(parsedCo2Records)
-
+    // Unwrap the Option instances before passing to showCO2Data
+    val unwrappedRecords = parsedCo2Records.flatten
+    ClimateService.showCO2Data(unwrappedRecords)
     logger.info("Stopping the app")
     System.exit(0)
   }

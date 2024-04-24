@@ -29,8 +29,116 @@ class ClimateServiceTest extends AnyFunSuite {
     assert(ClimateService.parseRawData(list1) == output)
   }
 
-  //@TODO
-  test("filterDecemberData") {
-    assert(true == false)
+  test("getMinMax should return (0.0, 10.0) for a list containing CO2Record instances with ppm values from 0.0 to 10.0") {
+    val records = List(
+      CO2Record(2023, 1, 0.0),
+      CO2Record(2023, 2, 5.0),
+      CO2Record(2023, 3, 10.0)
+    )
+    val result = ClimateService.getMinMax(records)
+    assert(result == (0.0, 10.0))
   }
+
+  test("getMinMax should return (0.0, 0.0) for a list containing only one CO2Record instance with ppm value 0.0") {
+    val records = List(
+      CO2Record(2023, 1, 0.0)
+    )
+    val result = ClimateService.getMinMax(records)
+    assert(result == (0.0, 0.0))
+  }
+
+  test("getMinMax should return (0.0, 0.0) for an empty list") {
+    val records = List.empty[CO2Record]
+    val result = ClimateService.getMinMax(records)
+    assert(result == (0.0, 0.0))
+  }
+
+test("getMinMaxByYear should return (0.0, 10.0) for a list containing CO2Record instances with ppm values from 0.0 to 10.0 for the year 2023") {
+    val records = List(
+      CO2Record(2023, 1, 0.0),
+      CO2Record(2023, 2, 5.0),
+      CO2Record(2023, 3, 10.0)
+    )
+    val result = ClimateService.getMinMaxByYear(records, 2023)
+    assert(result == (0.0, 10.0))
+  }
+
+  test("getMinMaxByYear should return (0.0, 0.0) for a list containing only one CO2Record instance with ppm value 0.0 for the year 2023") {
+    val records = List(
+      CO2Record(2023, 1, 0.0)
+    )
+    val result = ClimateService.getMinMaxByYear(records, 2023)
+    assert(result == (0.0, 0.0))
+  }
+
+  test("getMinMaxByYear should return (0.0, 0.0) for an empty list for the year 2023") {
+    val records = List.empty[CO2Record]
+    val result = ClimateService.getMinMaxByYear(records, 2023)
+    assert(result == (0.0, 0.0))
+  }
+
+  test("getMinMaxByYear should return (0.0, 0.0) for a list containing CO2Record instances with ppm values from 0.0 to 10.0 for a year that does not exist in the list") {
+    val records = List(
+      CO2Record(2023, 1, 0.0),
+      CO2Record(2023, 2, 5.0),
+      CO2Record(2023, 3, 10.0)
+    )
+    val result = ClimateService.getMinMaxByYear(records, 2024)
+    assert(result == (0.0, 0.0))
+  }
+
+  test("calculateDifference should return Some(10.0) for a list containing CO2Record instances with ppm values from 0.0 to 10.0") {
+    val records = List(
+      CO2Record(2023, 1, 0.0),
+      CO2Record(2023, 2, 5.0),
+      CO2Record(2023, 3, 10.0)
+    )
+    val result = ClimateService.calculateDifference(records)
+    assert(result == Some(10.0))
+  }
+
+  test("calculateDifference should return Some(0.0) for a list containing only one CO2Record instance with ppm value 0.0") {
+    val records = List(
+      CO2Record(2023, 1, 0.0)
+    )
+    val result = ClimateService.calculateDifference(records)
+    assert(result == Some(0.0))
+  }
+
+  test("calculateDifference should return None for an empty list") {
+    val records = List.empty[CO2Record]
+    val result = ClimateService.calculateDifference(records)
+    assert(result == None)
+  }
+
+  //test("calculateDifference should return None for a list containing CO2Record instances with ppm values from 0.0 to 0.0") {
+  //   val records = List(
+  //    CO2Record(2023, 1, 0.0),
+  //    CO2Record(2023, 2, 0.0),
+  //    CO2Record(2023, 3, 0.0)
+  //  )
+  //  val result = ClimateService.calculateDifference(records)
+  //  assert(result == None)
+  //}
+
+  //@TODO
+  //test("filterDecemberData") {
+  //  assert(true == false)
+  //}
+  test("filterDecemberData should remove all values from December (month 12) of every year") {
+  val inputList = List(
+    Some(CO2Record(2023, 1, 400.0)),
+    Some(CO2Record(2023, 12, 410.0)),
+    Some(CO2Record(2024, 6, 420.0)),
+    Some(CO2Record(2024, 12, 430.0)),
+    Some(CO2Record(2025, 12, 440.0)),
+    None
+  )
+  val expectedOutput = List(
+    CO2Record(2023, 1, 400.0),
+    CO2Record(2024, 6, 420.0)
+  )
+  val actualOutput = ClimateService.filterDecemberData(inputList)
+  assert(actualOutput == expectedOutput)
+}
 }

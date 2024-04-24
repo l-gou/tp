@@ -16,8 +16,12 @@ object ClimateService {
    * @param description "my awesome sentence contains a key word like climate change"
    * @return Boolean True
    */
-  def isClimateRelated(description: String): Boolean = ???
-
+  def isClimateRelated(description: String): Boolean = {
+    // Define a regex pattern to identify the keywords.
+    val pattern: Regex = "(?i)\\b(global warming|IPCC|climate change|carbon footprint)\\b".r
+    // Check if the description contains any of the specified keywords.
+    pattern.findFirstIn(description).isDefined
+  }
   /**
    * parse a list of raw data and transport it with type into a list of CO2Record
    * if the ppm value is valid (some ppm values are negative (CO2Record's "isValidPpmValue" function))
@@ -25,27 +29,88 @@ object ClimateService {
    * otherwise : None
    * you can access to Tuple with myTuple._1, myTuple._2, myTuple._3
    */
-  def parseRawData(list: List[(Int, Int, Double)]) : List[Option[CO2Record]] = {
-    list.map { record => ??? }
-    ???
+  def parseRawData(list: List[(Int, Int, Double)]): List[Option[CO2Record]] = {
+    list.map { case (year, month, ppm) =>
+      val record = CO2Record(year, month, ppm)
+      // Check if the ppm value is valid by calling isValidPpmValue on the instance
+      if (record.isValidPpmValue) {
+        // If valid, wrap the record in Some
+        Some(record)
+      } else {
+        // If not valid, return None
+        None
+      }
+    }
   }
-
   /**
    * remove all values from december (12) of every year
    *
    * @param list
    * @return a list
    */
-  def filterDecemberData(list: List[Option[CO2Record]]) : List[CO2Record] = ???
-
-
+  def filterDecemberData(list: List[Option[CO2Record]]): List[CO2Record] = {
+    list.flatten.filter(record => record.month != 12)
+  }
   /**
-   * **Tips**: look at the read me to find some tips for this function
+   * Finds the minimum and maximum ppm values from a list of CO2Record.
+   *
+   * @param list The list of CO2Record instances.
+   * @return A tuple containing the minimum and maximum ppm values.
    */
-  def getMinMax(list: List[CO2Record]) : (Double, Double) = ???
-
-  def getMinMaxByYear(list: List[CO2Record], year: Int) : (Double, Double) = ???
-
+  def getMinMax(list: List[CO2Record]): (Double, Double) = {
+    if (list.isEmpty) {
+      // Handle the case when the list is empty
+      (0.0, 0.0)
+    } else if (list.size == 1) {
+      // Return the ppm value twice if the list contains only one element
+      val ppmValue = list.head.ppm
+      (ppmValue, ppmValue)
+    } else {
+      val minRecord = list.minBy(_.ppm)
+      val maxRecord = list.maxBy(_.ppm)
+      (minRecord.ppm, maxRecord.ppm)
+    }
+  }
+  /**
+   * Finds the minimum and maximum ppm values for a specific year from a list of CO2Record.
+   *
+   * @param list The list of CO2Record instances.
+   * @param year The year for which to find the minimum and maximum ppm values.
+   * @return A tuple containing the minimum and maximum ppm values for the specified year.
+   */
+  def getMinMaxByYear(list: List[CO2Record], year: Int): (Double, Double) = {
+    // Filter the list to include only records for the specified year
+    val recordsForYear = list.filter(_.year == year)
+    // Use getMinMax function to find the minimum and maximum ppm values for the filtered records
+    getMinMax(recordsForYear)
+  }
+  /**
+   * Calculates the difference between the maximum and minimum ppm values in a list of CO2Record.
+   *
+   * @param list The list of CO2Record instances.
+   * @return The difference between the maximum and minimum ppm values.
+   */
+  /**
+   * Calculates the difference between the maximum and minimum ppm values in a list of CO2Record.
+   *
+   * @param list The list of CO2Record instances.
+   * @return The difference between the maximum and minimum ppm values, wrapped in an Option.
+   */
+  def calculateDifference(list: List[CO2Record]): Option[Double] = {
+    if (list.isEmpty) {
+      // Return None if the list is empty
+      None
+    } else {
+      val (minPpm, maxPpm) = getMinMax(list)
+      if (minPpm == maxPpm) {
+        // If all ppm values are the same, return Some(0.0)
+        Some(0.0)
+      } else {
+        // Otherwise, return the difference
+        Some(maxPpm - minPpm)
+      }
+    }
+  }
   /**
    * use this function side src/main/scala/com/polomarcus/main/Main (with sbt run)
    * display every item on the list using the CO2Record's "show" function
@@ -54,12 +119,15 @@ object ClimateService {
    *
    * @param list
    */
-  def showCO2Data(list: List[Option[CO2Record]]): Unit = {
+  def showCO2Data(list: List[CO2Record]): Unit = {
     logger.info("Call ClimateService.filterDecemberData here")
+    val countNoneValues = list.count(_.ppm == 0.0)
+    logger.info(s"Number of None values: $countNoneValues")
 
-    logger.info("Call record.show function here inside a map function")
+    list.foreach { record =>
+      logger.info(record.show())
+    }
   }
-
   /**
    * CO2 record from 1958 to 2022
    * Recorded at Mauna Loa Observatory, Hawaii
