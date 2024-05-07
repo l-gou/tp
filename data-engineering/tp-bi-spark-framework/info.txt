@@ -1,0 +1,9 @@
+docker-compose build my-scala-app
+docker-compose run my-scala-app bash # connect to your container to acces to SBT
+> sbt test
+# or 
+> sbt run
+
+
+testOnly ClimateServiceTest -- -z [name function]
+testOnly NewsServiceTest -- -z [name function] 
